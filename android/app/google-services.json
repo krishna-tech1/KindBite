@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "537515124606",
+    "project_id": "kind-bite",
+    "storage_bucket": "kind-bite.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537515124606:android:38f0a98d6a456557adf52f",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "537515124606-mk90ieresgfh6dq1ufpg6cm69puaefe1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_application_1",
+            "certificate_hash": "14fe25579371861ec85950ac9d755772b948ccd5"
+          }
+        },
+        {
+          "client_id": "537515124606-pl836uo12ucdmd26pvuo244abenba9h0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYHnDajCnvUOcJvO5yh7FSSY05u0EMiKA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "537515124606-pl836uo12ucdmd26pvuo244abenba9h0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
