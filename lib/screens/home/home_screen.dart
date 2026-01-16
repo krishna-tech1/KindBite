@@ -76,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (confirm == true) {
       setState(() => _acceptingPostId = postId);
+      if (!context.mounted) return;
       await _acceptPost(postId, context);
       if (mounted) setState(() => _acceptingPostId = null);
     }
@@ -191,23 +192,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   stream: FirebaseFirestore.instance
                       .collection('posts')
                       .where('status', isEqualTo: 'available')
-                      .where('expiresAt', isGreaterThan: Timestamp.now())
-                      .orderBy('expiresAt')
+                      .orderBy('createdAt', descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) return SliverToBoxAdapter(child: Center(child: Text('Error: ${snapshot.error}')));
                     if (!snapshot.hasData) return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
 
-                    final docs = List.from(snapshot.data!.docs);
-
-                    // Sort: Nearby first
-                    docs.sort((a, b) {
-                      final aDist = (a.data() as Map<String, dynamic>)['district'];
-                      final bDist = (b.data() as Map<String, dynamic>)['district'];
-                      if (aDist == userDistrict && bDist != userDistrict) return -1;
-                      if (aDist != userDistrict && bDist == userDistrict) return 1;
-                      return 0;
-                    });
+                    final now = DateTime.now();
+                    final docs = snapshot.data!.docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final expiresAt = (data['expiresAt'] as Timestamp).toDate();
+                      return expiresAt.isAfter(now);
+                    }).toList();
 
                     if (docs.isEmpty) return SliverToBoxAdapter(child: _buildEmptyState());
 
@@ -268,17 +264,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   child: SizedBox(
-                    height: 200,
+                    height: 250,
                     width: double.infinity,
-                    child: PageView(
-                      children: images.map((url) => Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
+                    child: Stack(
+                      children: [
+                        PageView(
+                          children: images.map((url) => Container(
+                            color: Colors.grey.shade100, // Background for mismatched ratios
+                            child: Image.network(
+                              url,
+                              fit: BoxFit.contain, // Shows full image without cropping
+                              alignment: Alignment.center,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image, color: Colors.grey, size: 48),
+                              ),
+                            ),
+                          )).toList(),
                         ),
-                      )).toList(),
+                        // Gradient Overlay
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.3),
+                                ],
+                                stops: const [0.7, 1.0],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

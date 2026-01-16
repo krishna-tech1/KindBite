@@ -159,7 +159,7 @@ class ProfileScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: AppColors.dangerRed.withOpacity(0.2)),
+                          side: BorderSide(color: AppColors.dangerRed.withValues(alpha: 0.2)),
                         ),
                         elevation: 0,
                       ),
@@ -190,7 +190,7 @@ class ProfileScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(children: options),

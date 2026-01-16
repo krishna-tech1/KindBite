@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_colors.dart';
 import '../chat/chat_screen.dart';
-
 class DoneesScreen extends StatelessWidget {
   const DoneesScreen({super.key});
 
@@ -57,7 +56,6 @@ class DoneesScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('posts')
             .where('status', isEqualTo: 'accepted')
-            .where('expiresAt', isGreaterThan: Timestamp.now())
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -68,12 +66,18 @@ class DoneesScreen extends StatelessWidget {
             return _buildEmptyState();
           }
 
-          // 🔒 Filter: only donor OR donee can see
+          final now = Timestamp.now();
+          // 🔒 Filter: only donor OR donee can see AND not expired
           final docs = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             final donorId = data['userId'];
             final acceptedBy = data['acceptedBy'];
-            return donorId == currentUser.uid || acceptedBy == currentUser.uid;
+            final expiresAt = data['expiresAt'] as Timestamp;
+            
+            final isUserInvolved = donorId == currentUser.uid || acceptedBy == currentUser.uid;
+            final isNotExpired = expiresAt.seconds > now.seconds;
+            
+            return isUserInvolved && isNotExpired;
           }).toList();
 
           if (docs.isEmpty) {

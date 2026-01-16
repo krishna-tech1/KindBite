@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import '../../theme/app_colors.dart';
+import '../../services/cloudinary_service.dart';
 
 class DonateScreen extends StatefulWidget {
   const DonateScreen({super.key});
@@ -21,6 +21,7 @@ class _DonateScreenState extends State<DonateScreen> {
   bool _isLoading = false;
   int _selectedHours = 3;
 
+
   // ---------------- IMAGE PICKER ----------------
   Future<void> _pickImages() async {
     final picker = ImagePicker();
@@ -28,6 +29,7 @@ class _DonateScreenState extends State<DonateScreen> {
 
     if (images.isNotEmpty) {
       if (images.length > 10) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Maximum 10 images allowed')),
         );
@@ -43,22 +45,17 @@ class _DonateScreenState extends State<DonateScreen> {
   }
 
   // ---------------- IMAGE UPLOAD ----------------
-  Future<List<String>> _uploadImages(String postId) async {
-    final List<String> urls = [];
+  Future<List<String>> uploadImages(List<File> images) async {
+  List<String> urls = [];
 
-    for (int i = 0; i < _selectedImages.length; i++) {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('post_images')
-          .child('$postId-$i.jpg');
-
-      final task = await ref.putFile(_selectedImages[i]);
-      final url = await task.ref.getDownloadURL();
-      urls.add(url);
-    }
-
-    return urls;
+  for (final img in images) {
+    final url = await CloudinaryService.uploadImage(img);
+    urls.add(url);
   }
+
+  return urls;
+}
+
 
   // ---------------- POST DONATION ----------------
   Future<void> _postDonation() async {
@@ -100,8 +97,9 @@ class _DonateScreenState extends State<DonateScreen> {
 
       List<String> imageUrls = [];
       if (_selectedImages.isNotEmpty) {
-        imageUrls = await _uploadImages(postRef.id);
+        imageUrls = await uploadImages(_selectedImages);
       }
+
 
       final expiresAt = Timestamp.fromDate(
         DateTime.now().add(Duration(hours: _selectedHours)),
@@ -109,8 +107,8 @@ class _DonateScreenState extends State<DonateScreen> {
 
       await postRef.set({
         'userId': user.uid,
-        'title': title,
-        'description': description,
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
         'district': userDistrict,
         'images': imageUrls,
         'createdAt': Timestamp.now(),
@@ -131,6 +129,7 @@ class _DonateScreenState extends State<DonateScreen> {
         const SnackBar(content: Text('Donation posted successfully!'), backgroundColor: AppColors.primaryGreen),
       );
     } catch (e) {
+      debugPrint('Error posting donation: $e');
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,7 +237,15 @@ class _DonateScreenState extends State<DonateScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.file(_selectedImages[index], width: 100, height: 100, fit: BoxFit.cover),
+                        child: Container(
+                          color: Colors.grey.shade100,
+                          child: Image.file(
+                            _selectedImages[index],
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                       Positioned(
                         top: 4,
@@ -299,7 +306,7 @@ class _DonateScreenState extends State<DonateScreen> {
 
   Widget _buildExpiryDropdown() {
     return DropdownButtonFormField<int>(
-      value: _selectedHours,
+      initialValue: _selectedHours,
       decoration: InputDecoration(
         labelText: 'Valid For',
         filled: true,

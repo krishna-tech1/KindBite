@@ -32,7 +32,7 @@ class WelcomeScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -63,7 +63,7 @@ class WelcomeScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     height: 1.5,
                     fontWeight: FontWeight.w400,
                   ),
@@ -113,7 +113,7 @@ class WelcomeScreen extends StatelessWidget {
                   'By continuing, you agree to our Terms of Service',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 8),

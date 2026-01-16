@@ -79,10 +79,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       'country': 'India',
       'state': 'Tamil Nadu',
       'district': _selectedDistrict,
-      'phoneVerified': false,
-      'phone': null,
-      'createdAt': Timestamp.now(),
-    });
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
     if (!mounted) return;
 
