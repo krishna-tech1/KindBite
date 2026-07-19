@@ -308,12 +308,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.sentiment_satisfied_alt_rounded, color: Colors.grey.shade600),
-                    onPressed: () {},
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
+
                 ],
               ),
             ),

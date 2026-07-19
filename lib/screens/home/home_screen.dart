@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../theme/app_colors.dart';
 import '../chat/chat_list_screen.dart';
 
@@ -13,6 +14,20 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? _acceptingPostId;
+  Map<String, dynamic>? _cachedUserProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final profile = await _getUserProfile();
+    if (mounted) {
+      setState(() => _cachedUserProfile = profile);
+    }
+  }
 
   // TIME LEFT
   String _timeLeft(Timestamp expiresAt) {
@@ -126,15 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: _getUserProfile(),
-        builder: (context, profileSnapshot) {
-          if (profileSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final userData = profileSnapshot.data;
-          final userName = userData?['name'] ?? 'Kind Soul';
+      body: Builder(
+        builder: (context) {
+          final userData = _cachedUserProfile;
           final userDistrict = userData?['district'] ?? '';
 
           return CustomScrollView(
@@ -155,11 +164,24 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Hi, $userName',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            _cachedUserProfile == null
+                                ? Shimmer.fromColors(
+                                    baseColor: Colors.white24,
+                                    highlightColor: Colors.white54,
+                                    child: Container(
+                                      height: 16,
+                                      width: 120,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    'Hi, ${_cachedUserProfile!['name'] ?? 'Kind Soul'}',
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                             const Text(
                               'Find a donation near you',
                               style: TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.normal),
@@ -196,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) return SliverToBoxAdapter(child: Center(child: Text('Error: ${snapshot.error}')));
-                    if (!snapshot.hasData) return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+                    if (!snapshot.hasData) return SliverToBoxAdapter(child: _buildSkeletonList());
 
                     final now = DateTime.now();
                     final docs = snapshot.data!.docs.where((doc) {
@@ -425,6 +447,50 @@ class _HomeScreenState extends State<HomeScreen> {
     if (confirm == true) {
       await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
     }
+  }
+
+  Widget _buildSkeletonList() {
+    return Column(
+      children: List.generate(4, (index) => _buildSkeletonCard()),
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade200,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        height: 220,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 140,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 14, width: 180, color: Colors.white),
+                  const SizedBox(height: 8),
+                  Container(height: 12, width: 120, color: Colors.white),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
